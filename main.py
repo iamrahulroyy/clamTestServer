@@ -1,4 +1,6 @@
+import os
 import subprocess
+import tempfile
 from fastapi import FastAPI, UploadFile, File, HTTPException
 
 app = FastAPI()
@@ -6,26 +8,22 @@ app = FastAPI()
 CLAMSCAN_CMD = "clamscan"  # works if clamav is installed
 
 def scan_bytes(file_bytes: bytes) -> bool:
-    """
-    Scan raw file bytes with ClamAV and return True if clean, False if infected.
-    """
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+
     try:
-        # Run clamscan with "-" so it reads from stdin
         result = subprocess.run(
-            [CLAMSCAN_CMD, "-"],   # "-" means read from stdin
-            input=file_bytes,
+            [CLAMSCAN_CMD, tmp_path],
             capture_output=True,
             text=True,
             check=False
         )
-
-        # Debug: you can inspect result.stdout if needed
         if "Infected files: 1" in result.stdout:
-            return False  # malware detected
-        return True       # clean
-
-    except Exception as e:
-        raise RuntimeError(f"Scan failed: {e}")
+            return False
+        return True
+    finally:
+        os.remove(tmp_path)
 
 @app.post("/scan")
 async def scan_endpoint(file: UploadFile = File(...)):
@@ -41,4 +39,4 @@ async def scan_endpoint(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="localhost", port=8000)
