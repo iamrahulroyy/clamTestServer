@@ -1,9 +1,10 @@
+import json
 import requests
 import sys
 from pathlib import Path
 import traceback
 
-API_URL = "http://127.0.0.1:8000/scan"
+API_URL = "http://10.0.0.203:8000/scan"
 
 def scan_file(filepath: str):
     path = Path(filepath)
@@ -13,12 +14,13 @@ def scan_file(filepath: str):
 
     with open(filepath, "rb") as f:
         files = {"file": (path.name, f, "application/octet-stream")}
-        print("before track")
+        print("initiating 🤖 request...")
         try:
-            print("inside")
+            print("📤 Sending file to server...")
             response = requests.post(API_URL, files=files)
             response.raise_for_status()
-            print("✅ Server Response:", response.json())
+            print("✅ Server Response:")
+            print(json.dumps(response.json(), indent=4))
         except requests.exceptions.RequestException as e:
             traceback.print_exc()
             print(f"⚠️ Request failed: {e}")

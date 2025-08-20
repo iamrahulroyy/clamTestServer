@@ -7,8 +7,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 
 app = FastAPI()
 
-CLAMSCAN_CMD = "clamscan"  # assumes clamav is installed
-
+CLAMSCAN_CMD = "clamscan" 
 
 def scan_bytes(file_bytes: bytes, filename: str) -> dict:
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -25,13 +24,11 @@ def scan_bytes(file_bytes: bytes, filename: str) -> dict:
         )
         end_time = time.time()
 
-        # Parse scan result
         clean = "Infected files: 0" in result.stdout
         infected = not clean
         infection_name = None
 
         if infected:
-            # Example line: /tmp/tmpabcd: Eicar-Test-Signature FOUND
             for line in result.stdout.splitlines():
                 if tmp_path in line and "FOUND" in line:
                     infection_name = line.split(":")[1].strip().replace(" FOUND", "")
